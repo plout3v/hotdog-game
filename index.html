@@ -1,39 +1,42 @@
-
 <!DOCTYPE html>
 <html lang="cs">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Hotdog hra – mobilní verze</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Gašpiho hra</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
+      height: auto;
       background: #111;
-      height: 100%;
+      color: white;
+      overflow: hidden;
       font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
     }
 
     canvas {
-      display: block;
       width: 100%;
-      flex: 1;
-      background: #fff;
+      height: 85vh;
+      display: block;
+      margin: 0 auto;
+      border: 3px solid white;
+      touch-action: none;
     }
 
     #touchControls {
       background: #111;
-      padding: 10px;
+      position: relative;
+      z-index: 10;
       text-align: center;
+      padding: 10px;
     }
 
     #touchControls button {
-      font-size: 24px;
+      font-size: 28px;
       padding: 10px 20px;
       margin: 5px;
-      border-radius: 10px;
+      border-radius: 12px;
     }
   </style>
 </head>
@@ -49,15 +52,20 @@
 </div>
 
 <script>
+// === Inicializace plátna ===
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-const GAME_WIDTH = 480;
-const GAME_HEIGHT = 320;
+let floorY;
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  floorY = canvas.height - 10;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
 
-canvas.width = GAME_WIDTH;
-canvas.height = GAME_HEIGHT;
-
+// === Obrázky ===
 const playerImage = new Image();
 playerImage.src = "hotdog-sad.png";
 const bulletImage = new Image();
@@ -68,38 +76,52 @@ enemyImage.src = "enemy.png";
 const shootSound = new Audio("mortar.mp3");
 const explosionSound = new Audio("explosion.mp3");
 
+// === Hráč ===
+const originalSpeed = 2;
+const originalJumpForce = -10;
+const originalWidth = 120;
+const originalHeight = 170;
+
 const player = {
-  x: 40,
-  y: 40,
-  width: 60,
-  height: 85,
+  x: 50,
+  y: 50,
+  width: 120,
+  height: 170,
   velX: 0,
   velY: 0,
-  speed: 1.5,
-  jumpForce: -6,
+  speed: 2,
+  jumpForce: -10,
   gravity: 0.2,
   grounded: false
 };
 
-let floorY = GAME_HEIGHT - 10;
+const gravity = 0.2;
 
 const platforms = [
-  { x: 50, y: 220, width: 100, height: 15 },
-  { x: 180, y: 150, width: 100, height: 15 },
-  { x: 300, y: 90, width: 100, height: 15 }
+  { x: 200, y: 450, width: 100, height: 20 },
+  { x: 130, y: 100, width: 100, height: 20 },
+  { x: 400, y: 350, width: 100, height: 20 },
+  { x: 520, y: 175, width: 100, height: 20 }
 ];
 
 let enemy = {
-  x: 350,
-  y: 200,
-  width: 45,
-  height: 45,
-  alive: true
+  x: 100,
+  y: 50,
+  baseX: 150,
+  baseY: 150,
+  width: 75,
+  height: 75,
+  alive: true,
+  angle: 0,
+  radiusX: 100,
+  radiusY: 70,
+  speed: 0.03
 };
 
 const bullets = [];
-const bulletSpeed = 2;
-const bulletSize = 25;
+const bulletSpeed = 1.5;
+const bulletWidth = 55;
+const bulletHeight = 45;
 let lastDir = 1;
 let ammo = 5;
 
@@ -107,20 +129,20 @@ const keys = {};
 
 document.addEventListener("keydown", (e) => {
   keys[e.key] = true;
-  if (e.key === "a") lastDir = -1;
-  if (e.key === "d") lastDir = 1;
-  if (e.key === "e") shootBullet();
+  if (e.key === "ArrowLeft" || e.key === "a") lastDir = -1;
+  if (e.key === "ArrowRight" || e.key === "d") lastDir = 1;
+  if (e.key === "e" || e.key === "E") shootBullet();
 });
 document.addEventListener("keyup", (e) => {
   keys[e.key] = false;
 });
 
 function updatePlayer() {
-  if (keys["a"]) player.velX = -player.speed;
-  else if (keys["d"]) player.velX = player.speed;
+  if (keys["ArrowLeft"] || keys["a"]) player.velX = -player.speed;
+  else if (keys["ArrowRight"] || keys["d"]) player.velX = player.speed;
   else player.velX = 0;
 
-  if (keys["w"] && player.grounded) {
+  if ((keys["ArrowUp"] || keys["w"]) && player.grounded) {
     player.velY = player.jumpForce;
     player.grounded = false;
   }
@@ -139,9 +161,12 @@ function updatePlayer() {
 
   platforms.forEach(p => {
     const withinX = player.x + player.width > p.x && player.x < p.x + p.width;
-    const hittingTop = player.y + player.height <= p.y && player.y + player.height + player.velY >= p.y;
-    if (withinX && hittingTop) {
-      player.y = p.y - player.height;
+    const isFalling = player.velY >= 0;
+    const hittingTop = player.y + player.height <= p.y + player.velY &&
+                       player.y + player.height + player.velY >= p.y;
+
+    if (withinX && isFalling && hittingTop) {
+      player.y = Math.round(p.y - player.height);
       player.velY = 0;
       player.grounded = true;
     }
@@ -151,8 +176,8 @@ function updatePlayer() {
 function shootBullet() {
   if (ammo > 0) {
     bullets.push({
-      x: player.x + (lastDir === 1 ? player.width : -bulletSize),
-      y: player.y + player.height / 2 - bulletSize / 2,
+      x: player.x + (lastDir === 1 ? player.width : -bulletWidth),
+      y: player.y + player.height / 2 - bulletHeight / 2,
       velX: bulletSpeed * lastDir
     });
     ammo--;
@@ -161,84 +186,150 @@ function shootBullet() {
   }
 }
 
+function updateEnemy() {
+  if (!enemy.alive) return;
+  enemy.angle += enemy.speed;
+  enemy.x = enemy.baseX + Math.cos(enemy.angle) * enemy.radiusX;
+  enemy.y = enemy.baseY + Math.sin(enemy.angle) * enemy.radiusY;
+}
+
 function updateBullets() {
   for (let i = bullets.length - 1; i >= 0; i--) {
     bullets[i].x += bullets[i].velX;
-    const b = bullets[i];
+    let b = bullets[i];
     if (enemy.alive &&
         b.x < enemy.x + enemy.width &&
-        b.x + bulletSize > enemy.x &&
+        b.x + bulletWidth > enemy.x &&
         b.y < enemy.y + enemy.height &&
-        b.y + bulletSize > enemy.y) {
+        b.y + bulletHeight > enemy.y) {
       enemy.alive = false;
-      playerImage.src = "hotdog-happy.png";
-      explosionSound.play();
       bullets.splice(i, 1);
+      playerImage.src = "hotdog-happy.png";
+      player.speed = 1;
+      player.jumpForce = -5;
+      player.gravity = 0.05;
+      player.width = originalWidth;
+      player.height = originalHeight;
+      explosionSound.currentTime = 0;
+      explosionSound.play();
       continue;
     }
-    if (b.x < 0 || b.x > GAME_WIDTH) bullets.splice(i, 1);
+    if (bullets[i].x > canvas.width || bullets[i].x + bulletWidth < 0) {
+      bullets.splice(i, 1);
+    }
   }
 }
 
-function drawGame() {
-  ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-  ctx.fillStyle = "#ddd";
-  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+function drawPlayer() {
+  ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
+}
 
+function drawEnemy() {
+  if (enemy.alive) {
+    ctx.drawImage(enemyImage, enemy.x, enemy.y, enemy.width, enemy.height);
+  }
+}
+
+function drawBullets() {
+  bullets.forEach(b => {
+    if (bulletImage.complete && bulletImage.naturalWidth) {
+      ctx.drawImage(bulletImage, b.x, b.y, bulletWidth, bulletHeight);
+    } else {
+      ctx.fillStyle = "red";
+      ctx.fillRect(b.x, b.y, bulletWidth, bulletHeight);
+    }
+  });
+}
+
+function drawGround() {
   ctx.fillStyle = "#555";
-  ctx.fillRect(0, floorY, GAME_WIDTH, 10);
+  ctx.fillRect(0, floorY, canvas.width, canvas.height - floorY);
+}
 
+function drawPlatforms() {
   ctx.fillStyle = "#888";
   platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
+}
 
-  ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
+function drawUI() {
+  const iconSize = 60;
+  for (let i = 0; i < ammo; i++) {
+    ctx.drawImage(bulletImage, 20 + i * (iconSize + 5), 20, iconSize, iconSize);
+  }
+}
 
-  if (enemy.alive)
-    ctx.drawImage(enemyImage, enemy.x, enemy.y, enemy.width, enemy.height);
-
-  bullets.forEach(b => {
-    ctx.drawImage(bulletImage, b.x, b.y, bulletSize, bulletSize);
-  });
-
+function drawHUDText() {
+  const text = "Gašpiho hra - zpárkovaný tábor";
   ctx.fillStyle = "#000";
-  ctx.font = "14px sans-serif";
-  ctx.fillText("Náboje: " + ammo, 10, 20);
+  ctx.font = "20px sans-serif";
+  ctx.textBaseline = "bottom";
+  ctx.fillText(text, 20, canvas.height - 50);
+}
+
+function drawEndText() {
+  if (!enemy.alive) {
+    const text = "KONEC";
+    ctx.fillStyle = "#b00";
+    ctx.font = "30px sans-serif";
+    ctx.textBaseline = "bottom";
+    const textWidth = ctx.measureText(text).width;
+    ctx.fillText(text, canvas.width - textWidth - 20, canvas.height - 10);
+  }
 }
 
 function gameLoop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
   updatePlayer();
+  updateEnemy();
   updateBullets();
-  drawGame();
+
+  drawGround();
+  drawPlatforms();
+  drawBullets();
+  drawPlayer();
+  drawEnemy();
+  drawUI();
+  drawHUDText();
+  drawEndText();
+
   requestAnimationFrame(gameLoop);
 }
 
-Promise.all([
-  new Promise(res => { playerImage.onload = res; }),
-  new Promise(res => { bulletImage.onload = res; }),
-  new Promise(res => { enemyImage.onload = res; })
-]).then(() => {
-  gameLoop();
-});
+playerImage.onload = () => gameLoop();
 
+// === Dotykové ovládání ===
 function simulateKey(key, isPressed) {
   keys[key] = isPressed;
   if (key === "a" && isPressed) lastDir = -1;
   if (key === "d" && isPressed) lastDir = 1;
-  if (key === "e" && isPressed) shootBullet();
+  if ((key === "e" || key === "E") && isPressed) shootBullet();
 }
 
-["leftBtn", "rightBtn", "jumpBtn", "shootBtn"].forEach(id => {
-  const btn = document.getElementById(id);
-  const keyMap = { leftBtn: "a", rightBtn: "d", jumpBtn: "w", shootBtn: "e" };
-  btn.addEventListener("touchstart", e => {
-    e.preventDefault();
-    simulateKey(keyMap[id], true);
+function setupTouchControls() {
+  const btns = [
+    { id: "leftBtn", key: "a" },
+    { id: "rightBtn", key: "d" },
+    { id: "jumpBtn", key: "w" },
+    { id: "shootBtn", key: "e" },
+  ];
+
+  btns.forEach(({ id, key }) => {
+    const btn = document.getElementById(id);
+    btn.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      simulateKey(key, true);
+    });
+    btn.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      simulateKey(key, false);
+    });
   });
-  btn.addEventListener("touchend", e => {
-    e.preventDefault();
-    simulateKey(keyMap[id], false);
-  });
-});
+}
+
+window.addEventListener("load", setupTouchControls);
 </script>
 
 </body>
