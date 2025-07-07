@@ -293,7 +293,10 @@ function drawEndText() {
 }
 
 function gameLoop() {
-  ctx.setTransform(scaleFactor, 0, 0, scaleFactor, 0, 0);
+  const scale = Math.min(canvas.width / GAME_WIDTH, canvas.height / GAME_HEIGHT);
+  const offsetX = (canvas.width - GAME_WIDTH * scale) / 2;
+  const offsetY = (canvas.height - GAME_HEIGHT * scale) / 2;
+  ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
