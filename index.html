@@ -10,21 +10,27 @@
       padding: 0;
       height: 100%;
       background: #111;
-      color: white;
-      overflow: hidden;
       font-family: sans-serif;
     }
 
-    canvas {
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    #gameCanvas {
+      flex: 1;
+      width: 100%;
       display: block;
-      margin: 0 auto;
       border: 3px solid white;
       touch-action: none;
     }
 
     #touchControls {
+      background: #111;
+      padding: 10px 0;
       text-align: center;
-      padding: 10px;
+      z-index: 1000;
     }
 
     #touchControls button {
@@ -54,7 +60,7 @@ const ctx = canvas.getContext("2d");
 let floorY;
 function resizeCanvas() {
   canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  canvas.height = canvas.clientHeight;
   floorY = canvas.height - 10;
 }
 window.addEventListener("resize", resizeCanvas);
