@@ -258,7 +258,7 @@ function drawBullets() {
 
 function drawGround() {
   ctx.fillStyle = "#555";
-  ctx.fillRect(0, floorY * scaleFactor, canvas.width, canvas.height - floorY * scaleFactor);
+  ctx.fillRect(0, GAME_HEIGHT - 10, GAME_WIDTH, 10);
 }
 
 function drawPlatforms() {
@@ -278,7 +278,7 @@ function drawHUDText() {
   ctx.fillStyle = "#000";
   ctx.font = `${20 * scaleFactor}px sans-serif`;
   ctx.textBaseline = "bottom";
-  ctx.fillText(text, 20, canvas.height - 50);
+  ctx.fillText(text, 20, GAME_HEIGHT - 50);
 }
 
 function drawEndText() {
@@ -288,7 +288,7 @@ function drawEndText() {
     ctx.font = `${30 * scaleFactor}px sans-serif`;
     ctx.textBaseline = "bottom";
     const textWidth = ctx.measureText(text).width;
-    ctx.fillText(text, canvas.width - textWidth - 20, canvas.height - 10);
+    ctx.fillText(text, GAME_WIDTH - textWidth - 20, GAME_HEIGHT - 10);
   }
 }
 
@@ -297,9 +297,9 @@ function gameLoop() {
   const offsetX = (canvas.width - GAME_WIDTH * scale) / 2;
   const offsetY = (canvas.height - GAME_HEIGHT * scale) / 2;
   ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
   ctx.fillStyle = "white";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
   updatePlayer();
   updateEnemy();
