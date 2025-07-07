@@ -236,22 +236,22 @@ function updateBullets() {
 }
 
 function drawPlayer() {
-  ctx.drawImage(playerImage, player.x * scaleFactor, player.y * scaleFactor, player.width * scaleFactor, player.height * scaleFactor);
+  ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
 }
 
 function drawEnemy() {
   if (enemy.alive) {
-    ctx.drawImage(enemyImage, enemy.x * scaleFactor, enemy.y * scaleFactor, enemy.width * scaleFactor, enemy.height * scaleFactor);
+    ctx.drawImage(enemyImage, enemy.x, enemy.y, enemy.width, enemy.height);
   }
 }
 
 function drawBullets() {
   bullets.forEach(b => {
     if (bulletImage.complete && bulletImage.naturalWidth) {
-      ctx.drawImage(bulletImage, b.x * scaleFactor, b.y * scaleFactor, bulletWidth * scaleFactor, bulletHeight * scaleFactor);
+      ctx.drawImage(bulletImage, b.x, b.y, bulletWidth, bulletHeight);
     } else {
       ctx.fillStyle = "red";
-      ctx.fillRect(b.x * scaleFactor, b.y * scaleFactor, bulletWidth * scaleFactor, bulletHeight * scaleFactor);
+      ctx.fillRect(b.x, b.y, bulletWidth, bulletHeight);
     }
   });
 }
@@ -263,11 +263,11 @@ function drawGround() {
 
 function drawPlatforms() {
   ctx.fillStyle = "#888";
-  platforms.forEach(p => ctx.fillRect(p.x * scaleFactor, p.y * scaleFactor, p.width * scaleFactor, p.height * scaleFactor));
+  platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
 }
 
 function drawUI() {
-  const iconSize = 60 * scaleFactor;
+  const iconSize = 60;
   for (let i = 0; i < ammo; i++) {
     ctx.drawImage(bulletImage, 20 + i * (iconSize + 5), 20, iconSize, iconSize);
   }
@@ -276,7 +276,7 @@ function drawUI() {
 function drawHUDText() {
   const text = "Gašpiho hra - zpárkovaný tábor";
   ctx.fillStyle = "#000";
-  ctx.font = `${20 * scaleFactor}px sans-serif`;
+  ctx.font = `${20}px sans-serif`;
   ctx.textBaseline = "bottom";
   ctx.fillText(text, 20, GAME_HEIGHT - 50);
 }
@@ -285,7 +285,7 @@ function drawEndText() {
   if (!enemy.alive) {
     const text = "KONEC";
     ctx.fillStyle = "#b00";
-    ctx.font = `${30 * scaleFactor}px sans-serif`;
+    ctx.font = `${30}px sans-serif`;
     ctx.textBaseline = "bottom";
     const textWidth = ctx.measureText(text).width;
     ctx.fillText(text, GAME_WIDTH - textWidth - 20, GAME_HEIGHT - 10);
