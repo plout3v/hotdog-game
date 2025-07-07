@@ -54,6 +54,8 @@
 
 <script>
 // === Inicializace plátna ===
+const GAME_WIDTH = 800;
+const GAME_HEIGHT = 600;
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -61,9 +63,16 @@ let floorY;
 let scaleFactor;
 
 function resizeCanvas() {
+  const aspectRatio = GAME_WIDTH / GAME_HEIGHT;
   const aspectRatio = 800 / 600; // Původní poměr stran (800x600)
   canvas.width = window.innerWidth;
-  canvas.height = window.innerWidth / aspectRatio;
+  if (window.innerWidth / window.innerHeight > aspectRatio) {
+    canvas.height = window.innerHeight;
+    canvas.width = canvas.height * aspectRatio;
+  } else {
+    canvas.width = window.innerWidth;
+    canvas.height = canvas.width / aspectRatio;
+  }
 
   scaleFactor = canvas.width / 800; // Přepočet škálování
   floorY = canvas.height - 10;
@@ -284,6 +293,7 @@ function drawEndText() {
 }
 
 function gameLoop() {
+  ctx.setTransform(scaleFactor, 0, 0, scaleFactor, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
