@@ -58,9 +58,14 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
 let floorY;
+let scaleFactor;
+
 function resizeCanvas() {
+  const aspectRatio = 800 / 600; // Původní poměr stran (800x600)
   canvas.width = window.innerWidth;
-  canvas.height = canvas.clientHeight;
+  canvas.height = window.innerWidth / aspectRatio;
+
+  scaleFactor = canvas.width / 800; // Přepočet škálování
   floorY = canvas.height - 10;
 }
 window.addEventListener("resize", resizeCanvas);
@@ -222,38 +227,38 @@ function updateBullets() {
 }
 
 function drawPlayer() {
-  ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
+  ctx.drawImage(playerImage, player.x * scaleFactor, player.y * scaleFactor, player.width * scaleFactor, player.height * scaleFactor);
 }
 
 function drawEnemy() {
   if (enemy.alive) {
-    ctx.drawImage(enemyImage, enemy.x, enemy.y, enemy.width, enemy.height);
+    ctx.drawImage(enemyImage, enemy.x * scaleFactor, enemy.y * scaleFactor, enemy.width * scaleFactor, enemy.height * scaleFactor);
   }
 }
 
 function drawBullets() {
   bullets.forEach(b => {
     if (bulletImage.complete && bulletImage.naturalWidth) {
-      ctx.drawImage(bulletImage, b.x, b.y, bulletWidth, bulletHeight);
+      ctx.drawImage(bulletImage, b.x * scaleFactor, b.y * scaleFactor, bulletWidth * scaleFactor, bulletHeight * scaleFactor);
     } else {
       ctx.fillStyle = "red";
-      ctx.fillRect(b.x, b.y, bulletWidth, bulletHeight);
+      ctx.fillRect(b.x * scaleFactor, b.y * scaleFactor, bulletWidth * scaleFactor, bulletHeight * scaleFactor);
     }
   });
 }
 
 function drawGround() {
   ctx.fillStyle = "#555";
-  ctx.fillRect(0, floorY, canvas.width, canvas.height - floorY);
+  ctx.fillRect(0, floorY * scaleFactor, canvas.width, canvas.height - floorY * scaleFactor);
 }
 
 function drawPlatforms() {
   ctx.fillStyle = "#888";
-  platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
+  platforms.forEach(p => ctx.fillRect(p.x * scaleFactor, p.y * scaleFactor, p.width * scaleFactor, p.height * scaleFactor));
 }
 
 function drawUI() {
-  const iconSize = 60;
+  const iconSize = 60 * scaleFactor;
   for (let i = 0; i < ammo; i++) {
     ctx.drawImage(bulletImage, 20 + i * (iconSize + 5), 20, iconSize, iconSize);
   }
@@ -262,7 +267,7 @@ function drawUI() {
 function drawHUDText() {
   const text = "Gašpiho hra - zpárkovaný tábor";
   ctx.fillStyle = "#000";
-  ctx.font = "20px sans-serif";
+  ctx.font = `${20 * scaleFactor}px sans-serif`;
   ctx.textBaseline = "bottom";
   ctx.fillText(text, 20, canvas.height - 50);
 }
@@ -271,7 +276,7 @@ function drawEndText() {
   if (!enemy.alive) {
     const text = "KONEC";
     ctx.fillStyle = "#b00";
-    ctx.font = "30px sans-serif";
+    ctx.font = `${30 * scaleFactor}px sans-serif`;
     ctx.textBaseline = "bottom";
     const textWidth = ctx.measureText(text).width;
     ctx.fillText(text, canvas.width - textWidth - 20, canvas.height - 10);
