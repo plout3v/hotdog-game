@@ -5,11 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gašpiho hra</title>
   <style>
-    body { margin: 0; text-align: center; background: #111; color: white; }
-    canvas { border: 3px solid white; margin-top: 10px; }
-    #touchControls {
-      margin-top: 10px;
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #111;
+      color: white;
+      overflow: hidden;
+      font-family: sans-serif;
     }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+      border: 3px solid white;
+      touch-action: none;
+    }
+
+    #touchControls {
+      text-align: center;
+      padding: 10px;
+    }
+
     #touchControls button {
       font-size: 28px;
       padding: 10px 20px;
@@ -20,7 +37,7 @@
 </head>
 <body>
 
-<canvas id="gameCanvas" width="800" height="600"></canvas>
+<canvas id="gameCanvas"></canvas>
 
 <div id="touchControls">
   <button id="leftBtn">⬅️</button>
@@ -30,21 +47,31 @@
 </div>
 
 <script>
+// === Inicializace plátna ===
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+let floorY;
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  floorY = canvas.height - 10;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// === Obrázky ===
 const playerImage = new Image();
 playerImage.src = "hotdog-sad.png";
-
 const bulletImage = new Image();
 bulletImage.src = "parek.png";
-
 const enemyImage = new Image();
 enemyImage.src = "enemy.png";
 
 const shootSound = new Audio("mortar.mp3");
 const explosionSound = new Audio("explosion.mp3");
 
+// === Hráč ===
 const originalSpeed = 2;
 const originalJumpForce = -10;
 const originalWidth = 120;
@@ -64,7 +91,6 @@ const player = {
 };
 
 const gravity = 0.2;
-const floorY = canvas.height - 10;
 
 const platforms = [
   { x: 200, y: 450, width: 100, height: 20 },
@@ -102,19 +128,14 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowRight" || e.key === "d") lastDir = 1;
   if (e.key === "e" || e.key === "E") shootBullet();
 });
-
 document.addEventListener("keyup", (e) => {
   keys[e.key] = false;
 });
 
 function updatePlayer() {
-  if (keys["ArrowLeft"] || keys["a"]) {
-    player.velX = -player.speed;
-  } else if (keys["ArrowRight"] || keys["d"]) {
-    player.velX = player.speed;
-  } else {
-    player.velX = 0;
-  }
+  if (keys["ArrowLeft"] || keys["a"]) player.velX = -player.speed;
+  else if (keys["ArrowRight"] || keys["d"]) player.velX = player.speed;
+  else player.velX = 0;
 
   if ((keys["ArrowUp"] || keys["w"]) && player.grounded) {
     player.velY = player.jumpForce;
@@ -155,7 +176,6 @@ function shootBullet() {
       velX: bulletSpeed * lastDir
     });
     ammo--;
-
     shootSound.currentTime = 0;
     shootSound.play();
   }
@@ -163,7 +183,6 @@ function shootBullet() {
 
 function updateEnemy() {
   if (!enemy.alive) return;
-
   enemy.angle += enemy.speed;
   enemy.x = enemy.baseX + Math.cos(enemy.angle) * enemy.radiusX;
   enemy.y = enemy.baseY + Math.sin(enemy.angle) * enemy.radiusY;
@@ -180,19 +199,16 @@ function updateBullets() {
         b.y + bulletHeight > enemy.y) {
       enemy.alive = false;
       bullets.splice(i, 1);
-
       playerImage.src = "hotdog-happy.png";
       player.speed = 1;
       player.jumpForce = -5;
       player.gravity = 0.05;
       player.width = originalWidth;
       player.height = originalHeight;
-
       explosionSound.currentTime = 0;
       explosionSound.play();
       continue;
     }
-
     if (bullets[i].x > canvas.width || bullets[i].x + bulletWidth < 0) {
       bullets.splice(i, 1);
     }
